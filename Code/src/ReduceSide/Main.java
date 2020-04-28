@@ -1,9 +1,10 @@
 package ReduceSide;
 
 
-import ReduceSide.ProductOrder;
+//import ReduceSide.ProductOrder;
 
 
+import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -45,14 +46,12 @@ public class Main // 主函数（类）
             Job job = new Job(conf, "Reduce-Side-Join");
             job.setJarByClass(Main.class);
             job.setMapperClass(ReaderMapper.class);
-            job.setReducerClass(MergeReducer.class);
-            job.setCombinerClass(CombinerSameWordDoc.class);
-            job.setPartitionerClass(DividePartitioner.class);
+            job.setReducerClass(JoinReducer.class);
+//            job.setCombinerClass(CombinerSameWordDoc.class);
+            job.setPartitionerClass(PidPartitioner.class);
             job.setNumReduceTasks(1);
-            job.setOutputKeyClass(Text.class);
-            job.setOutputValueClass(IntWritable.class);
-//            job.setMapOutputKeyClass(Text.class);
-//            job.setMapOutputValueClass(Text.class);
+            job.setOutputKeyClass(ProductOrder.class);
+            job.setOutputValueClass(NullWritable.class);
             job.setInputFormatClass(TextInputFormat.class);
             FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
             FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
@@ -64,7 +63,7 @@ public class Main // 主函数（类）
         }
     }
 
-    public static class ReaderMapper extends Mapper<LongWritable,Text,ProductOrder, NullWritable>
+    public static class ReaderMapper extends Mapper<LongWritable, Text, ProductOrder, NullWritable>
         // 用于读取文件中的信息，并且组织成为自定义的类型
     {
         @Override
@@ -98,96 +97,28 @@ public class Main // 主函数（类）
             }
 
             context.write(po, NullWritable.get());
-
-//
-//            while(tokens.hasMoreTokens())
-//            {
-//                word.set(tokens.nextToken());
-//                Text word_filename = new Text(word + "#" + docName); // 创建复合键
-////                context.write(word_filename, new IntWritable(1));
-////                context.write(word, new Text(fileName));
-//            }
-        }
-    }
-    public static class CombinerSameWordDoc extends Reducer<Text, IntWritable, Text, IntWritable>
-    {
-        /**
-         * 用来合并同一个 词语-小说 的组
-         * @param key
-         * @param values 同一个 词语-小说 的列表
-         * @param context
-         * @throws IOException
-         * @throws InterruptedException
-         */
-        @Override
-        protected void reduce(Text key, Iterable<IntWritable> values,
-                              Reducer<Text, IntWritable, Text, IntWritable>.Context context) throws IOException, InterruptedException {
-            int total = 0;
-            for(IntWritable value: values)
-            {
-                total = total + value.get();
-            }
-            context.write(key, new IntWritable(total));
         }
     }
 
-    public static class DividePartitioner extends HashPartitioner<Text, IntWritable>
+    public static class PidPartitioner extends HashPartitioner<ProductOrder, NullWritable>
     {
         @Override
-        public int getPartition(Text key, IntWritable value,
-                                int numPartitions) {
-            String real_key = key.toString().split("#")[0];
-            return super.getPartition(new Text(real_key), value, numPartitions);
+        public int getPartition(ProductOrder key, NullWritable value,
+                                int numPartitions)
+        {
+            return key.getPid() % numPartitions;
         }
     }
 
-    public static class MergeReducer extends Reducer<Text, IntWritable, Text, Text>
+    public static class JoinReducer extends Reducer<ProductOrder, NullWritable, Text, NullWritable>
     {
-        String t_prev;
-        int worddoc_count; // 同键值的计数
-        String output_;
-        double words_sum;
-        double doc_sum;
         @Override
-        protected void setup(Context context)
+        protected void reduce(ProductOrder key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException
         {
-            t_prev = new String();
-            worddoc_count = 0;
-            output_ = new String();
-            words_sum = 0.0;
-            doc_sum = 0.0;
-        }
-        @Override
-        protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException
-        {
-            int count = 0;
-            for (IntWritable value: values)
+            for (NullWritable value: values)
             {
-                count += value.get();
+                key.print();
             }
-            String t = key.toString().split("#")[0];
-//            System.out.println(t);
-//            System.out.println(t_prev);
-            if (!t.equals(t_prev) && t_prev != null && !t_prev.equals(""))
-            {
-                double average = words_sum / doc_sum;
-//                context.write(new Text(t_prev + "\t" + doubleTransform(average) + ","), new Text(output_));
-                output_ = "";
-                words_sum = 0.0;
-                doc_sum = 0.0;
-            }
-            words_sum += (double)count;
-            doc_sum += 1.0;
-            t_prev = t;
-            output_ = output_ + key.toString().split("#")[1] + ":" + Integer.toString(count) + ";";
-        }
-        @Override
-        protected void cleanup(Context context) throws IOException, InterruptedException
-        {
-            double average = words_sum / doc_sum;
-//            context.write(new Text(t_prev + "\t" + doubleTransform(average) + ","), new Text(output_));
-//            context.write(new Text(t_prev + ","), new Text(output_));
         }
     }
-
 }

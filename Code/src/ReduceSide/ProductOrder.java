@@ -38,6 +38,11 @@ public class ProductOrder implements WritableComparable<ProductOrder>
         this.price = -1;
     }
 
+    public ProductOrder()
+    {
+
+    }
+
     @Override
     public void write(DataOutput out) throws IOException
     {
@@ -84,5 +89,10 @@ public class ProductOrder implements WritableComparable<ProductOrder>
     public int getPid()
     {
         return this.pid;
+    }
+
+    public void print()
+    {
+        System.out.println(pid + " " + pname + " " + price + " " + id + " " + order_date + " " + num);
     }
 }
