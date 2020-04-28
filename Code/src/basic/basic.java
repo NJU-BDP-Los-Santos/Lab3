@@ -60,7 +60,7 @@ public class basic {
             System.out.println(values.toString());
             for(Text value : values)
                 if(value.toString().startsWith("#a")){
-                    vecA.add(value.toString().substring(2));//2???
+                    vecA.add(value.toString().substring(2));
                     System.out.println(value.toString());
                 }
                 else if (value.toString().startsWith("#b")) {
@@ -93,10 +93,8 @@ public class basic {
 
 
         Configuration conf = new Configuration();
-        //args='order.csv';
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        //JobConf job = new JobConf(Test.class);
-        Job job = Job.getInstance(conf);//, "Data Deduplication");
+        Job job = Job.getInstance(conf);
         job.setJarByClass(basic.class);
 
         //设置Map、Combine和Reduce处理类
@@ -111,7 +109,6 @@ public class basic {
         //设置reduder输出类型
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-        //job.setOutputFormatClass(TextOutputFormat.class);
 
         //设置输入和输出目录
         FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
