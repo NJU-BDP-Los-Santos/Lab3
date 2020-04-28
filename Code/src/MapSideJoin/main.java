@@ -91,10 +91,11 @@ public class main extends Configured implements Tool
 
         public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
-
-            Text oValue = new Text("");
+            String[] strings = key.toString().split(" ", 2);
+            Text oKey = new Text(strings[0]);
+            Text oValue = new Text(strings[1]);
             //oValue.set(String.valueOf(sumCount));
-            context.write(key, oValue);
+            context.write(oKey, oValue);
         }
 
     }
@@ -127,7 +128,10 @@ public class main extends Configured implements Tool
     }
 
     public static void main(String[] args) throws Exception {
-        int res = ToolRunner.run(new Configuration(), new main(), args);
+        Configuration conf = new Configuration();
+        conf.set("mapred.textoutputformat.ignoreseparator","true");
+        conf.set("mapred.textoutputformat.separator"," ");
+        int res = ToolRunner.run(conf, new main(), args);
         System.exit(res);
     }
 }
