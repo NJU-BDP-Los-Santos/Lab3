@@ -93,6 +93,8 @@ public class basic {
 
 
         Configuration conf = new Configuration();
+        conf.set("mapred.textoutputformat.ignoreseparator","true");
+        conf.set("mapred.textoutputformat.separator"," ");
         //args='order.csv';
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         //JobConf job = new JobConf(Test.class);
