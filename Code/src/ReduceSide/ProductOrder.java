@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 public class ProductOrder implements WritableComparable<ProductOrder>
@@ -91,8 +92,41 @@ public class ProductOrder implements WritableComparable<ProductOrder>
         return this.pid;
     }
 
+    public String getPname()
+    {
+        return this.pname;
+    }
+
+    public int getPrice()
+    {
+        return this.price;
+    }
+
+    public int getId()
+    {
+        return this.id;
+    }
+
+    public void setPname(String name)
+    {
+        this.pname = name;
+    }
+
+    public void setPrice(int p)
+    {
+        this.price = p;
+    }
+
     public void print()
     {
         System.out.println(pid + " " + pname + " " + price + " " + id + " " + order_date + " " + num);
+    }
+
+    public Text toText()
+    {
+        if (!pname.equals(""))
+            return new Text(Integer.toString(id) + " " + order_date + " " + Integer.toString(pid) + " " + pname + " " + Integer.toString(price) + " " + Integer.toString(num));
+        else
+            return new Text(Integer.toString(id) + " " + order_date + " " + Integer.toString(pid) + " NULL NULL " + Integer.toString(num));
     }
 }

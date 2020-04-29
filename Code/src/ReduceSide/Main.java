@@ -134,10 +134,19 @@ public class Main // 主函数（类）
         @Override
         protected void reduce(ProductOrder key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException
         {
-            System.out.println("<In One Reduce Function>");
+            // 首先找到product对应的那个key
+            String pname = key.getPname();
+            int price = key.getPrice();
             for (NullWritable value: values)
             {
-                key.print();
+                if (key.getId() == -1)
+                {
+                    continue;
+                }
+//                System.out.println(pname);
+                key.setPname(pname);
+                key.setPrice(price);
+                context.write(key.toText(), value);
             }
         }
     }
