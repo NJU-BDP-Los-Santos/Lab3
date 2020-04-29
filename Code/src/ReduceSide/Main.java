@@ -7,9 +7,7 @@ package ReduceSide;
 import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.*;
 //import org.apache.hadoop.mapred.lib.HashPartitioner;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -21,7 +19,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.hadoop.io.Text;
 import org.mockito.internal.matchers.Null;
 
 import java.io.IOException;
@@ -50,6 +47,7 @@ public class Main // 主函数（类）
 //            job.setCombinerClass(CombinerSameWordDoc.class);
             job.setPartitionerClass(PidPartitioner.class);
             job.setNumReduceTasks(1);
+            job.setGroupingComparatorClass(PidGroup.class);
             job.setOutputKeyClass(ProductOrder.class);
             job.setOutputValueClass(NullWritable.class);
             job.setInputFormatClass(TextInputFormat.class);
@@ -93,7 +91,7 @@ public class Main // 主函数（类）
             }
             else
             {
-                po = new ProductOrder(Integer.parseInt(data[0]), Integer.parseInt(data[1]), data[2], Integer.parseInt(data[3]));
+                po = new ProductOrder(Integer.parseInt(data[2]), Integer.parseInt(data[0]), data[1], Integer.parseInt(data[3]));
             }
 
             context.write(po, NullWritable.get());
@@ -110,11 +108,33 @@ public class Main // 主函数（类）
         }
     }
 
+    public static class PidGroup extends WritableComparator
+    {
+        public PidGroup()
+        {
+            super(ProductOrder.class, true);
+        }
+        public int compare(WritableComparable left, WritableComparable right)
+        {
+            ProductOrder l = (ProductOrder) left;
+            ProductOrder r = (ProductOrder) right;
+            int l_id = l.getPid();
+            int r_id = r.getPid();
+            if (l_id == r_id)
+                return 0;
+            else if (l_id > r_id)
+                return 1;
+            else
+                return -1;
+        }
+    }
+
     public static class JoinReducer extends Reducer<ProductOrder, NullWritable, Text, NullWritable>
     {
         @Override
         protected void reduce(ProductOrder key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException
         {
+            System.out.println("<In One Reduce Function>");
             for (NullWritable value: values)
             {
                 key.print();

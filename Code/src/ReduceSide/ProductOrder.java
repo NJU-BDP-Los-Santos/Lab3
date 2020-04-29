@@ -78,9 +78,9 @@ public class ProductOrder implements WritableComparable<ProductOrder>
         {
             // 此时是两个pid相同的情况
             if (!this.pname.equals(""))
-                return 1;
-            else if (!other.pname.equals(""))
                 return -1;
+            else if (!other.pname.equals(""))   // 保证这一属性有值的在前面
+                return 1;
             else
                 return 0;
         }
